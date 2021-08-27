@@ -1,1 +1,3 @@
-# die_data_analysis
+# Die Data Analysis
+
+A brief data analysis on die rolls.

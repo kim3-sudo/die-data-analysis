@@ -43,7 +43,7 @@ With a W test statistic of 309 and a *p*-value of 0.4759, it would appear that b
 
 ### Conclusion
 
-The test has concluded that the two dies are of the same type, and that statistically, there is no difference between the two.
+The test has concluded that the two dies are of the same type, and that statistically, there is no difference between the two. With a *p*-value of 0.4758, we must accept the null hypothesis that the two dies are of the same group.
 
 While we know that the two die are not of the same type, the test has failed us. A more accurate conclusion would require many more die rolls.
 

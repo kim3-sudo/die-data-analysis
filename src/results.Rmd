@@ -1,0 +1,87 @@
+---
+title: "Dice Roll Data Analysis"
+author: "Sejin Kim"
+date: "8/30/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data
+
+Two die were rolled, one of which was weighted and one of which was not. In the analysis, `die1` is the weighted die, and `die2` is the non-weighted die. The data were stored in a comma-separated value document (`.csv`) and in a R dataset (`.rds`) file, and both are available in the repository at [https://github.com/kim3-sudo/die-data-analysis](https://github.com/kim3-sudo/die-data-analysis).
+
+# Analysis
+
+After the data were imported and formatted as needed, a simple EDA was done visually, and a simple Tibble was created with counts, medians, and IQRs. Interestingly, both datasets look about the same from a summary statistic point of view. This is further reflected by the histograms.
+
+```{r pressure, echo=FALSE}
+dataset1 <- readRDS(url("https://github.com/kim3-sudo/die-data-analysis/blob/main/data/die_dataset_1.rds?raw=true"))
+dataset2 <- readRDS(url("https://github.com/kim3-sudo/die-data-analysis/blob/main/data/die_dataset_2.rds?raw=true"))
+dataset1 <- as.vector(dataset1[,2])
+dataset2 <- as.vector(dataset2[,2])
+dataset1hist <- hist(dataset1, breaks=seq.int(1, 6, 1), xlab = "Value", ylab = "Frequency", main = "Dataset 1 Values")
+dataset2hist <- hist(dataset2, breaks=seq.int(1, 6, 1), xlab = "Value", ylab = "Frequency", main = "Dataset 2 Values")
+```
+
+However, the data are non-normal, so we cannot use an analysis of variance, which depends on normality. Rather, I used a Wilcoxon rank sum test. The assumptions for a Wilcoxon test are as follows.
+
+- Each data is independent. That is, each die roll was not affected by the previous roll or will not influence the result of the next roll.
+- The two populations have equal variance.
+
+To test for equal variance, we can run a Fligner-Killeen test for homogeneity of variances. The hypotheses for the Fligner-Killeen test are as follows.
+
+- $H_{0}$ (null hypothesis): There is evidence to suggest that the variances in die rolls are significantly different between the different treatment groups (the different dice).
+- $H_{A}$ (alternative hypothesis): There is no evidence to suggest that the variance in values are significantly different between the different treatment groups.
+
+A test can be run using the following code.
+
+```R
+fligner.test(value ~ group, data = diedata)
+```
+
+where `value` represents the value that was rolled, `group` represents the die that was rolled, and `diedata` is the dataset that holds the values for both die.
+
+The results of the Fligner-Killeen test are as follows, as reported by R (v3.6.3).
+
+```
+	Fligner-Killeen test of homogeneity of variances
+
+data:  value by group
+Fligner-Killeen:med chi-squared = 0, df = 1, p-value = 1
+```
+
+Given a $p$-value of 1 and a median $\chi^{2} = 0$ on 1 degree of freedom, we fail to reject the null hypothesis that the variances are significantly different and all conditions are met. Therefore, we can run a Wilcoxon rank sum test.
+
+The hypotheses for the Wilcoxon rank sum test are as follows.
+
+- $H_{0}$ (null hypothesis): The two datasets are derived from the same die.
+- $H_{A}$ (alternative hypothesis): There is some force acting on one of the die.
+
+A Wilcoxon rank sum test can be run using the following code.
+
+```R
+wtest <- wilcox.test(value ~ group, data = diedata, exact = FALSE, alternative = "less")
+```
+
+where `value` represents that value that was rolled, `group` indicates the die that was rolled, `diedata` is the dataset that holds the values for both die, `exact` mutes the warning that a Wilcoxon test's responses are continuous, and `alternative = "less"` indicates a test for whether the median roll value on die 1 is less than the median roll value on die 2.
+
+The results of the Wilcoxon test are as follows, as reported by R (v3.6.3).
+
+```
+	Wilcoxon rank sum test with continuity correction
+
+data:  value by group
+W = 309, p-value = 0.4759
+alternative hypothesis: true location shift is less than 0
+```
+
+With a W test statistic of 309 and a $p$-value of 0.4759, it would appear that both of the die were of the same type.
+
+# Conclusion
+
+The test has concluded that the two dies are of the same type, and that statistically, there is no difference between the two. With a $p$-value of 0.4758, we must accept the null hypothesis that the two dies are of the same group.
+
+While we know that the two die are not of the same type, the test has failed us. A more accurate conclusion would require many more die rolls.
